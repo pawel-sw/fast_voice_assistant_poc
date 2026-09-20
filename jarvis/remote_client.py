@@ -148,7 +148,7 @@ def listen(config, duration=None, dry_run=False):
                         worker = threading.Thread(target=receive, daemon=True)
                         worker.start()
                         log.info('LISTENING: %s; client control; VM R2T2/Needle/Kokoro; speaker=%s', device['name'], config.get('speaker_device', 'default'))
-                        pre, votes = deque(maxlen=150), deque(maxlen=5)
+                        pre, votes = deque(maxlen=max(1, round(config.get('asr_preroll_seconds', .5) / .02))), deque(maxlen=5)
                         recording = awaiting = muted = False
                         stream_session = None
                         utterance = 0

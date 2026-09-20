@@ -24,7 +24,8 @@ try:
             sftp.put(str(ROOT/name), DEST+'/'+name)
         config = json.loads((ROOT/'config.json').read_text())
         server_keys = ('chunk_seconds', 'tts_voice', 'tts_speed', 'tts_device',
-                       'asr_gpu_memory_utilization', 'server_max_connections')
+                       'asr_gpu_memory_utilization', 'server_max_connections', 'max_utterance_seconds',
+                       'asr_stream_max_new_tokens', 'asr_final_max_new_tokens')
         config = {key: config[key] for key in server_keys if key in config}
         config['server_asr_model'] = DEST+'/models/R2T2'
         with sftp.open(DEST+'/config.json', 'w') as file:

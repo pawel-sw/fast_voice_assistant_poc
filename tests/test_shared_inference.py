@@ -64,3 +64,14 @@ def test_gate_released_after_failure():
             raise ValueError('model failed')
     with gate:
         assert gate.busy
+
+
+def test_asr_uses_small_stream_and_final_token_budgets():
+    from unittest.mock import Mock
+    asr = RemoteASR.__new__(RemoteASR)
+    asr.model = Mock()
+    state = SimpleNamespace(text='fan on', buffer=np.zeros(0))
+    assert asr.feed(np.zeros(2560), state, final=True) == 'fan on'
+    assert asr.model.streaming_transcribe.call_args.kwargs['max_new_tokens'] == 4
+    assert asr.model.finish_streaming_transcribe.call_args.kwargs['max_new_tokens'] == 8
+    assert state.buffer.size == 160

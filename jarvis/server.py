@@ -128,8 +128,9 @@ def main():
                     samples_seen += len(message)//2
                     if samples_seen > 16000*(config['max_utterance_seconds']+3):
                         raise ValueError('Utterance too long')
-                    for offset in range(0, len(message), 15360):
-                        samples = np.frombuffer(message[offset:offset+15360], dtype='<i2').astype(np.float32)/32768
+                    feed_bytes = max(2, round(16000 * config['chunk_seconds']) * 2)
+                    for offset in range(0, len(message), feed_bytes):
+                        samples = np.frombuffer(message[offset:offset+feed_bytes], dtype='<i2').astype(np.float32)/32768
                         with gpu_lock, inference_deadline():
                             text = asr.feed(samples, state)
                         emit({'type': 'transcript', 'utterance': utterance, 'text': text, 'final': False})

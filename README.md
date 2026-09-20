@@ -202,3 +202,16 @@ in the receiver thread; Needle timestamps enclose the RPC and validation;
 openHAB timestamps enclose the HTTP call. First TTS audio means first PCM chunk
 received by the playback consumer, not the instant sound reaches the speaker.
 The clean transcript log stays timestamp-free.
+
+### ASR latency settings
+
+The client retains 500 ms of audio before wake detection (`asr_preroll_seconds`).
+Client chunks and server feed blocks both follow `chunk_seconds` (160 ms by
+default). Speech endpoint silence is 450 ms. R2T2 uses
+`asr_stream_max_new_tokens: 4` per streaming decode and
+`asr_final_max_new_tokens: 8` for finalization. These budgets limit tokens per
+decode, not the whole utterance. Short pre-roll can omit the beginning of a
+wake phrase, especially with late detection; smaller token budgets can affect
+recognition accuracy. Tune these settings with recordings from your microphone.
+Restart both services after changing ASR settings; token budgets belong in the
+server configuration as well as the client deployment configuration.

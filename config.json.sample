@@ -47,5 +47,8 @@
     "outside": "Outside_Temperature",
     "inside": "Inside_Temperature"
   },
-  "server_asr_model": "models/R2T2"
+  "server_asr_model": "models/R2T2",
+  "asr_preroll_seconds": 0.5,
+  "asr_stream_max_new_tokens": 4,
+  "asr_final_max_new_tokens": 8
 }

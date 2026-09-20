@@ -4,14 +4,19 @@ from .observability import timed
 
 
 class RemoteASR:
+    stream_max_new_tokens = 4
+    final_max_new_tokens = 8
+
     def __init__(self, config):
+        self.stream_max_new_tokens = config.get('asr_stream_max_new_tokens', 4)
+        self.final_max_new_tokens = config.get('asr_final_max_new_tokens', 8)
         from r2t2 import R2T2ASRModel
         with timed('r2t2.vllm.load'):
             self.model = R2T2ASRModel.LLM(
                 model=config.get('server_asr_model', 'models/R2T2'),
                 dtype='float16', gpu_memory_utilization=config.get('asr_gpu_memory_utilization', 0.70),
                 max_model_len=2048, max_num_seqs=1, enforce_eager=True,
-                max_new_tokens=64, enable_prefix_caching=False,
+                max_new_tokens=self.final_max_new_tokens, enable_prefix_caching=False,
             )
         self.chunk_seconds = config['chunk_seconds']
         # JIT/feature-extractor initialization must finish before /health is ready.
@@ -25,11 +30,11 @@ class RemoteASR:
 
     def feed(self, samples, state, final=False):
         with timed('r2t2.vllm.stream', detail=True, audio_ms=round(len(samples)/16)):
-            self.model.streaming_transcribe(samples, state, max_new_tokens=16)
+            self.model.streaming_transcribe(samples, state, max_new_tokens=self.stream_max_new_tokens)
         if final:
             # Flush even when the last frame landed exactly on a chunk boundary.
             if not state.buffer.size:
                 state.buffer = np.zeros(160, dtype=np.float32)
             with timed('r2t2.vllm.finish'):
-                self.model.finish_streaming_transcribe(state, max_new_tokens=64)
+                self.model.finish_streaming_transcribe(state, max_new_tokens=self.final_max_new_tokens)
         return state.text

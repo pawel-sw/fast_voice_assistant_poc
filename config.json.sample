@@ -1,0 +1,51 @@
+{
+  "openhab_url": "http://openhab.example.invalid:8080",
+  "microphone": null,
+  "asr_model": "netease-youdao/Confucius4-R2T2",
+  "wake_phrase": "hey jarvis",
+  "wake_threshold": 0.3,
+  "wake_candidate_threshold": 0.1,
+  "input_max_gain": 12.0,
+  "input_target_dbfs": -26.0,
+  "input_floor_dbfs": -65.0,
+  "wake_confirmations": 2,
+  "wake_cooldown_seconds": 1.5,
+  "chunk_seconds": 0.48,
+  "pause_seconds": 0.75,
+  "continuation_seconds": 5.0,
+  "max_utterance_seconds": 25,
+  "min_confidence": 0.8,
+  "include_items": [],
+  "exclude_items": [],
+  "aliases": {},
+  "remote_url": "ws://inference.example.invalid:8765",
+  "tts_enabled": true,
+  "tts_voice": "af_heart",
+  "tts_speed": 1.2,
+  "tts_device": "cuda",
+  "asr_gpu_memory_utilization": 0.7,
+  "server_max_connections": 16,
+  "groq_token": "",
+  "room_mappings": {},
+  "room_defaults": {},
+  "room_groups": {},
+  "ignore_rooms": [],
+  "ignore_groups": [],
+  "ignore_item_patterns": [],
+  "weather": {
+    "name": "London",
+    "aliases": [
+      "London",
+      "UK"
+    ],
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "timezone": "Europe/London"
+  },
+  "item_defaults": {},
+  "temperature_items": {
+    "outside": "Outside_Temperature",
+    "inside": "Inside_Temperature"
+  },
+  "server_asr_model": "models/R2T2"
+}

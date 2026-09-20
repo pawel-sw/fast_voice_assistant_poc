@@ -1,0 +1,4 @@
+-r requirements-client.txt
+pytest==9.1.1
+paramiko
+scipy

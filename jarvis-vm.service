@@ -1,0 +1,20 @@
+[Unit]
+Description=PoC Home Automation Voice Assistant inference service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=home-assistant
+WorkingDirectory=/p/home_assistant
+EnvironmentFile=/p/home_assistant/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=NEEDLE_TELEMETRY=0
+Environment=HF_HOME=/p/home_assistant/models/huggingface
+ExecStart=/p/home_assistant/.venv/bin/python -m jarvis.server
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

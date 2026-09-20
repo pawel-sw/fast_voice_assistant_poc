@@ -1,0 +1,10 @@
+qwen-asr[vllm]==0.0.6
+cactus-needle==3.0.2
+websockets==15.0.1
+webrtcvad-wheels==2.0.14
+python-dotenv==1.2.3
+requests==2.34.2
+kokoro==0.9.4
+misaki[en]==0.9.4
+vllm==0.14.0
+confucius4-r2t2 @ git+https://github.com/netease-youdao/Confucius4-R2T2@80c22e6140bcb9166fb9906798894fc8b18c8309

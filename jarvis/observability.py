@@ -157,3 +157,27 @@ class Transcript:
         # Partial text belongs only in transcript.txt. audio.py logs one final
         # "Heard" entry per utterance in the diagnostic log.
         self.words = words
+
+
+def timestamp(event, session, *, at=None, **fields):
+    """Client-clock event time; at is a captured monotonic timestamp."""
+    from datetime import datetime, timezone
+    mono = time.monotonic() if at is None else at
+    wall = time.time() - (time.monotonic() - mono)
+    utc = datetime.fromtimestamp(wall, timezone.utc).isoformat(timespec='microseconds')
+    context = ' '.join(f'{key}={value}' for key, value in fields.items())
+    timing_log.info('EVENT %s timestamp=%s monotonic=%.6f session=%s %s',
+                    event, utc, mono, session, context)
+
+
+@contextmanager
+def timestamp_span(name, session, **fields):
+    timestamp(name + '_start', session, **fields)
+    outcome = 'ok'
+    try:
+        yield
+    except BaseException as exc:
+        outcome = type(exc).__name__
+        raise
+    finally:
+        timestamp(name + '_done', session, outcome=outcome, **fields)

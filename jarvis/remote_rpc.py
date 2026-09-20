@@ -10,7 +10,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 import sounddevice as sd
 from websockets.sync.client import connect
-from .observability import timed, planning_feedback
+from .observability import timed, planning_feedback, timestamp, timestamp_span
 from .inference import SYSTEM
 from clients.inference_client import speech_messages
 
@@ -148,7 +148,7 @@ class RemotePlanner:
             schemas = self.catalog.candidates(text)
         if not schemas:
             return []
-        with timed('remote.needle.roundtrip'), connect_remote(self.config, '/rpc') as ws:
+        with timestamp_span('needle', session), timed('remote.needle.roundtrip'), connect_remote(self.config, '/rpc') as ws:
             ready(ws)
             ws.send(json.dumps({'type': 'plan', 'session': session, 'text': text, 'schemas': schemas, 'system': SYSTEM}))
             while True:
@@ -230,6 +230,7 @@ class SpeechOutput:
                 for message in messages:
                     if isinstance(message, bytes):
                         if first:
+                            timestamp('tts_first_audio', session)
                             logging.getLogger('jarvis.timing').info('TIMING tts.first_audio %.2f ms', (time.perf_counter()-began)*1000)
                             first = False
                         if self.sink is not None:

@@ -182,3 +182,23 @@ This repository does not bundle third-party model weights, drivers, or vendored 
 - [openHAB](https://www.openhab.org/): home automation.
 - [Groq](https://console.groq.com/docs/overview): optional fast cloud fallback.
 - [Open-Meteo](https://open-meteo.com/): weather data.
+
+### Per-request event timestamps
+
+`logs/timings.log` records `EVENT` entries for `wake_detected`,
+`last_speech_audio`, `vad_endpoint`, `last_audio_sent_to_r2t2`,
+`final_transcript_received`, `needle_start`, `needle_done`, `openhab_start`,
+`openhab_done`, and `tts_first_audio`. Each includes an ISO UTC `timestamp`,
+client `monotonic` seconds, and `session` ID. Audio events also identify the
+utterance. Needle retries produce another start/done pair; failures carry an
+outcome. Skipped stages have no events; dry runs do not log openHAB calls.
+
+`last_speech_audio` is the end of the last 20 ms frame classified as speech,
+using PortAudio ADC timing where available (callback time otherwise). It is
+emitted retrospectively at the VAD endpoint: use its explicit timestamp, not
+the log line's emission time. `last_audio_sent_to_r2t2` marks completion of the
+last binary socket send, not server receipt. Final transcript receipt is stamped
+in the receiver thread; Needle timestamps enclose the RPC and validation;
+openHAB timestamps enclose the HTTP call. First TTS audio means first PCM chunk
+received by the playback consumer, not the instant sound reaches the speaker.
+The clean transcript log stays timestamp-free.

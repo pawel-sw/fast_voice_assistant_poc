@@ -113,7 +113,12 @@ def listen(config, duration=None, dry_run=False):
         if status:
             overflow.set()
         try:
-            frames.put_nowait((time.monotonic(), bytes(data)))
+            captured = time.monotonic()
+            # PortAudio's ADC time identifies the end of the captured frame,
+            # rather than the later time at which the main loop processes it.
+            if timing is not None and timing.inputBufferAdcTime > 0:
+                captured += timing.inputBufferAdcTime + count / 16000 - timing.currentTime
+            frames.put_nowait((captured, bytes(data)))
         except queue.Full:
             overflow.set()
 
@@ -131,7 +136,10 @@ def listen(config, duration=None, dry_run=False):
                         def receive(socket=ws, inbox=events, ended=disconnected):
                             try:
                                 for message in socket:
-                                    inbox.put(json.loads(message))
+                                    event = json.loads(message)
+                                    if event.get('type') == 'transcript' and event.get('final'):
+                                        obs.timestamp('final_transcript_received', event.get('session'), utterance=event.get('utterance'))
+                                    inbox.put(event)
                             except Exception as exc:
                                 inbox.put({'type': 'connection_error', 'message': str(exc)})
                             finally:
@@ -146,6 +154,7 @@ def listen(config, duration=None, dry_run=False):
                         utterance = 0
                         chunk = []
                         silence = total = 0
+                        last_speech = last_sent = None
                         last_progress = time.monotonic()
                         wake.reset()
                         while not duration or time.monotonic()-started < duration:
@@ -202,13 +211,18 @@ def listen(config, duration=None, dry_run=False):
                             score = wake.feed(frame)
                             speech = vad.is_speech(frame, 16000)
                             votes.append(speech)
+                            if speech:
+                                last_speech = captured
                             timer_interrupt = timer.is_ringing and not brain.listening and sum(votes) >= 3
                             if score or timer_interrupt:
                                 stream_session = brain.start(tentative=wake.needs_verification if score else False,
                                                              timer_only=not bool(score))
                                 utterance = 0
+                                if score:
+                                    obs.timestamp('wake_detected', stream_session, tentative=wake.needs_verification)
                                 ws.send(json.dumps({'type': 'asr_start', 'session': stream_session, 'utterance': utterance}))
                                 ws.send(b''.join(pre))
+                                last_sent = time.monotonic()
                                 recording, awaiting = True, False
                                 silence = total = 0
                                 chunk = []
@@ -238,11 +252,17 @@ def listen(config, duration=None, dry_run=False):
                                 log.warning('Utterance limit reached; discarded')
                                 continue
                             final = silence >= config['pause_seconds']
+                            if final:
+                                obs.timestamp('vad_endpoint', stream_session, utterance=utterance)
+                                if last_speech is not None:
+                                    obs.timestamp('last_speech_audio', stream_session, at=last_speech, utterance=utterance, source='audio_frame_end')
                             if final or len(chunk)*.02 >= config['chunk_seconds']:
                                 if chunk:
                                     ws.send(b''.join(chunk))
+                                    last_sent = time.monotonic()
                                     chunk = []
                                 if final:
+                                    obs.timestamp('last_audio_sent_to_r2t2', stream_session, at=last_sent, utterance=utterance)
                                     ws.send(json.dumps({'type': 'asr_finish'}))
                                     recording, awaiting = False, True
                                     votes.clear()

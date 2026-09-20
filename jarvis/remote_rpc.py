@@ -73,6 +73,10 @@ class RemotePlanner:
             log.info('Ignored room request; no inference or commands')
             return []
         text = self.catalog.policy.normalize(text)
+        from .clock_queries import parse_clock
+        clock = parse_clock(text)
+        if clock is not None:
+            return [clock]
         from .weather import parse_weather
         weather = parse_weather(text, self.config)
         if weather is not None:
@@ -97,6 +101,9 @@ class RemotePlanner:
         if self.catalog.policy.ignored_request(corrected):
             return []
         corrected = self.catalog.policy.normalize(corrected)
+        clock = parse_clock(corrected)
+        if clock is not None:
+            return [clock]
         weather = parse_weather(corrected, self.config)
         if weather is not None:
             return [weather]

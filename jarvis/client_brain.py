@@ -13,6 +13,7 @@ from . import observability as obs
 from .speech import confirmation
 from .timers import TimerAction, parse_timer
 from .weather import WeatherQuery, WeatherService
+from .clock_queries import ClockQuery, clock_answer
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +108,10 @@ class ClientBrain:
                 break
             try:
                 # No retries: a failed HTTP response may still mean delivery.
-                if isinstance(action, WeatherQuery):
+                if isinstance(action, ClockQuery):
+                    with obs.timed('clock.answer'):
+                        result = clock_answer(action)
+                elif isinstance(action, WeatherQuery):
                     result = self.weather.answer(action)
                 elif isinstance(action, TimerAction):
                     if self.timer is None:
@@ -160,6 +164,11 @@ class ClientBrain:
                 future, state.delivery = state.delivery, None
                 replies = []
                 for action, result, error in future.result():
+                    if isinstance(action, ClockQuery):
+                        reply = 'I could not read the local clock.' if error else result
+                        obs.plain_note(action.kind, reply)
+                        replies.append(reply)
+                        continue
                     if isinstance(action, WeatherQuery):
                         reply = 'I could not get the weather right now. Please try again.' if error else result
                         obs.plain_note('weather', reply)

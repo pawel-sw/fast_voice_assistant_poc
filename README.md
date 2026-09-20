@@ -36,6 +36,7 @@ The inference server never executes home commands. Its authenticated API can als
 - Needle3 tool selection with confidence, item, argument, range, and explicit ON/OFF checks. Stale session results cannot act; failed device commands are not automatically replayed.
 - Configurable room aliases, default rooms and devices, and exclusion lists used by both Needle and Groq.
 - Kokoro-82M streamed replies, `af_heart` voice, **1.2x speaking speed** by default.
+- Local time and date: “what time is it” / “what time it is” and “what day is it” / “what is the date”. Answers use the microphone client's system timezone, for example “It is 3:09 PM” or “Sunday September 20”, with `[time:]` / `[date:]` in the live log. These queries bypass Needle and Groq.
 - One persistent timer (one second to 24 hours), openHAB remaining-time display, and a soft repeating chime. Say “cancel timer”, or “stop” in the quiet gaps while ringing.
 - Inside/outside temperature readings from configured openHAB items; current, today, and tomorrow weather from Open-Meteo for your configured location.
 - A clean live transcript with one line per wake, compact command JSON in brackets, `[groq repair:]`, `[groq call:]`, and result messages. Separate diagnostics and call timings.

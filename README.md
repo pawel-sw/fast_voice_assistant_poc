@@ -61,10 +61,13 @@ Setup creates `.venv`, installs client dependencies, downloads wake models, and 
 
 Edit **config.json**:
 
-- `openhab_url`: your openHAB base URL, without `/overview/`.
+- Configure exactly one non-empty integration URL. Omit the other or set it to `null` or an empty string; both (or neither) is an error.
+- `openhab_url`: optional openHAB base URL, without `/overview/`.
+- `homeassistant_url`: optional Home Assistant base URL, e.g. `http://10.10.10.101` (without `/home/overview`). Set `HOMEASSISTANT_TOKEN` to a long-lived access token in the client `.env`.
 - `remote_url`: your inference server WebSocket URL, including port 8765.
 - `microphone`: a device index or matching device name, or `null` for the default input. Optional `speaker_device` selects output.
 - `groq_token`: optional Groq API key; leave empty to disable fallback.
+- For Home Assistant, use entity IDs (e.g. `light.kitchen`, `sensor.outside_temperature`) in item settings and aliases. Friendly names supply spoken device names. Supported controls include lights, switches, input booleans, fans, covers, and media players, according to their advertised capabilities.
 - `temperature_items`: map `outside` and `inside` to actual item names. Only existing, non-excluded items become query tools.
 - `weather`: set `name`, spoken `aliases`, latitude, longitude, and timezone. The sample location is an example; change it before use.
 
@@ -215,3 +218,5 @@ wake phrase, especially with late detection; smaller token budgets can affect
 recognition accuracy. Tune these settings with recordings from your microphone.
 Restart both services after changing ASR settings; token budgets belong in the
 server configuration as well as the client deployment configuration.
+
+Home Assistant uses the [REST API](https://developers.home-assistant.io/docs/api/rest/) for discovery and service calls. Timer display is published as `sensor.jarvis_timer_remaining`; add it to your dashboard manually. This display entity is recreated by the running client after a Home Assistant restart. The openHAB timer setup tool applies only to openHAB.

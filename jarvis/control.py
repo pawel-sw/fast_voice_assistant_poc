@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 
 
 class OpenHAB:
+    name = 'openhab'
     def __init__(self, url):
         self.url = url.rstrip('/')
         self.session = requests.Session()
@@ -146,7 +147,9 @@ class Catalog:
                 self.add(name, 'play', f'Control playback of {label}.', {'type': 'string', 'enum': ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS']})
 
     def add(self, item, action, description, value):
-        name = action + '_' + item.lower()
+        if 'actions' in self.items[item] and action not in self.items[item]['actions']:
+            return
+        name = action + '_' + item.lower().replace('.', '_')
         self.actions[name] = (item, value)
         self.schemas.append({'name': name, 'description': description, 'parameters': {
             'type': 'object', 'properties': {'value': value}, 'required': ['value'], 'additionalProperties': False}})

@@ -1,4 +1,5 @@
 {
+  "homeassistant_url": null,
   "openhab_url": "http://openhab.example.invalid:8080",
   "microphone": null,
   "asr_model": "netease-youdao/Confucius4-R2T2",

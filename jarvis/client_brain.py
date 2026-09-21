@@ -118,12 +118,12 @@ class ClientBrain:
                         raise RuntimeError('Timer service unavailable')
                     result = self.timer.apply(action, dry_run=self.dry_run)
                 elif isinstance(action, TemperatureQuery):
-                    with obs.timestamp_span('openhab', state.id, item=action.item, operation='query'):
+                    with obs.timestamp_span(getattr(self.api, 'name', 'openhab'), state.id, item=action.item, operation='query'):
                         result = self.api.temperature(action.item)
                 else:
                     result = None
                     if not self.dry_run:
-                        with obs.timestamp_span('openhab', state.id, item=action.item, operation='command'):
+                        with obs.timestamp_span(getattr(self.api, 'name', 'openhab'), state.id, item=action.item, operation='command'):
                             result = self.api.command(action.item, action.command)
                 outcomes.append((action, result, None))
             except Exception:

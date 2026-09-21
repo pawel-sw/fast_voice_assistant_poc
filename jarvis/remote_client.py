@@ -14,7 +14,8 @@ from websockets.sync.client import connect
 import webrtcvad
 from .remote_rpc import connect_remote, ready, RemotePlanner, SpeechOutput
 from .client_brain import ClientBrain
-from .control import Catalog, OpenHAB
+from .integrations import create_integration
+from .control import Catalog
 
 from .input_audio import InputGain
 from .wake import WakeWord
@@ -55,7 +56,7 @@ def show(event):
 def text_request(config, text, execute=False):
     if execute and parse_timer(text) is not None:
         raise ValueError('Use the running voice listener for timers; --text supports timer dry-runs only')
-    api = OpenHAB(config['openhab_url'])
+    api = create_integration(config)
     catalog = Catalog(api.items(), config)
     speaker = SpeechOutput(config)
     # CLI dry-runs use an isolated timer store and never publish or ring.
@@ -92,11 +93,11 @@ def microphone(name):
 
 
 def listen(config, duration=None, dry_run=False):
-    api = OpenHAB(config['openhab_url'])
+    api = create_integration(config)
     catalog = Catalog(api.items(), config)
     speaker = SpeechOutput(config)
     # A separate HTTP session keeps countdown publishing independent of commands.
-    timer_api = OpenHAB(config['openhab_url'])
+    timer_api = create_integration(config)
     timer = TimerService(timer_api.timer_state if not dry_run else lambda value: None,
                          speaker.chime if not dry_run else lambda cancel: None,
                          path=config.get('timer_state_path'), start_worker=not dry_run)

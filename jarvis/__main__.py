@@ -56,11 +56,12 @@ def run(stack):
             return text_request(config, args.text, execute=args.execute and not args.dry_run)
         configure_plain_transcript(ROOT / 'logs/transcript.txt')
         return listen(config, args.duration, args.dry_run)
-    from .control import Catalog, Conversation, OpenHAB, Planner, execute_action
+    from .integrations import create_integration
+    from .control import Catalog, Conversation, Planner, execute_action
     from .observability import configure_plain_transcript
     if not args.text:
         configure_plain_transcript(ROOT / 'logs/transcript.txt')
-    api = OpenHAB(config['openhab_url'])
+    api = create_integration(config)
     items = api.items()
     catalog = Catalog(items, config)
     logging.info('Discovered %d items; enabled %d controllable devices', len(items), len(catalog.items))

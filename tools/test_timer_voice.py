@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from jarvis import remote_client as client
-from jarvis.control import OpenHAB
+from jarvis.integrations import create_integration
 from jarvis.timers import TimerService, TIMER_ITEM
 from jarvis.remote_rpc import SpeechOutput
 from jarvis.observability import configure_plain_transcript
@@ -39,7 +39,7 @@ pcm += bytes(-len(pcm) % 640)
 spoken = bytearray()
 chimes = []
 states = []
-api = OpenHAB(config['openhab_url'])
+api = create_integration(config)
 
 
 class Input:

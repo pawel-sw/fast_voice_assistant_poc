@@ -14,7 +14,8 @@ from scipy.signal import resample_poly
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
-from jarvis.control import OpenHAB, Catalog
+from jarvis.integrations import create_integration
+from jarvis.control import Catalog
 from jarvis.client_brain import ClientBrain
 from jarvis.remote_rpc import RemotePlanner, SpeechOutput, connect_remote, ready, timing_event
 from jarvis.observability import configure_plain_transcript
@@ -27,7 +28,7 @@ parser.add_argument('--play', action='store_true')
 args = parser.parse_args()
 load_dotenv(ROOT/'.env')
 config = json.loads((ROOT/'config.json').read_text())
-api = OpenHAB(config['openhab_url'])
+api = create_integration(config)
 catalog = Catalog(api.items(), config)
 pcm = bytearray()
 speaker = SpeechOutput(config, sink=None if args.play else pcm.extend)

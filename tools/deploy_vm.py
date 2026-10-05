@@ -20,7 +20,8 @@ try:
                 pass
             for path in (ROOT/name).glob('*.py'):
                 sftp.put(str(path), DEST+'/'+name+'/'+path.name)
-        for name in ('requirements-server.txt', 'jarvis-vm.service', 'pytest.ini', 'README.md', 'API.md'):
+        for name in ('requirements-server.txt', 'requirements-wyoming.txt',
+                     'jarvis-vm.service', 'jarvis-wyoming.service', 'pytest.ini', 'README.md', 'API.md'):
             sftp.put(str(ROOT/name), DEST+'/'+name)
         config = json.loads((ROOT/'config.json').read_text())
         server_keys = ('chunk_seconds', 'tts_voice', 'tts_speed', 'tts_device',

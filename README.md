@@ -125,7 +125,89 @@ The API listens on port 8765; authenticated `/health` reports ready after warmup
 
 Optional SSH helpers in `tools/` take `VM_SSH_HOST`, `VM_SSH_USER`, and `VM_SSH_PASSWORD` from the shell. `remote.py` stores first-seen host keys under ignored `data/`; verify the host fingerprint before trusting it. `deploy_vm.py` requires that known-host file and an existing remote directory. It copies source and an allowlist of inference settings, preserving remote models and environment packages. It does not install or restart the service. It synchronizes the bearer token without copying home credentials or changing existing client credentials.
 
+## Home Assistant Wyoming speech recognition and synthesis
+
+The optional Wyoming adapter exposes the shared R2T2 worker as a Home Assistant
+speech-to-text service and Kokoro as a text-to-speech service. It streams audio through the existing authenticated
+worker, preserving per-request state and GPU scheduling without loading another
+model. The endpoint supports English, 16 kHz mono PCM16, and returns the final
+transcript after `audio-stop`. Home Assistant supplies speech endpoint detection.
+
+On the inference server, with `jarvis-vm` already installed and running:
+
+```bash
+.venv/bin/pip install -r requirements-wyoming.txt
+# Adjust the unit's account and paths to match your installation.
+sudo cp jarvis-wyoming.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now jarvis-wyoming
+journalctl -u jarvis-wyoming -f
+```
+
+The adapter uses `JARVIS_REMOTE_TOKEN` from the server `.env` and connects to
+`ws://127.0.0.1:8765/asr`. Override this with `--backend`; `--uri` overrides the
+default `tcp://0.0.0.0:10300` listener. `--max-seconds` defaults to 33 and should
+not exceed the worker's `max_utterance_seconds + 3`. No Home Assistant token is
+needed on the inference machine. Wyoming TCP has no authentication or encryption;
+restrict port 10300 to Home Assistant and trusted LAN clients.
+
+In Home Assistant, add the **Wyoming Protocol** integration using the inference
+machine's address and port **10300**, then select **R2T2** as speech-to-text in
+the desired Assist pipeline under Settings > Voice assistants. This endpoint
+also provides **Kokoro** text-to-speech; select it for spoken replies, with English
+and the configured voice (`af_heart` by default). Synthesis uses the worker's
+configured speed (1.2x by default), accepts up to 1000 plain-text characters,
+and streams 24 kHz mono PCM16 audio. The pipeline's conversation agent handles commands.
+After upgrading an existing adapter, restart `jarvis-wyoming` and reload its
+Wyoming integration in Home Assistant to discover the new TTS entity.
+The resulting `tts.kokoro` entity supports Home Assistant's `tts.speak` action
+and `/api/tts_get_url` for generating audio without speaker playback.
+See the [Home Assistant Wyoming documentation](https://www.home-assistant.io/integrations/wyoming/).
+
 ## Configure your home
+
+### Home Assistant conversation agent
+
+`custom_components/jarvis_conversation` is a Home Assistant 2026.9 custom
+integration. Copy that directory to HA's `/config/custom_components/`, restart
+HA, then add **Jarvis Conversation** in Settings > Devices & services.
+Configure the inference worker's WebSocket URL and `JARVIS_REMOTE_TOKEN`.
+The existing worker handles Needle inference; no new GPU model is loaded.
+
+An optional Groq API key enables the same fallback sequence as the microphone
+client: local Needle, Groq transcript repair, Needle retry, then a Groq tool
+proposal or conversational reply. A disconnected local worker skips the second
+local attempt. The default cloud model is `openai/gpt-oss-120b`. Clear the Groq
+key in the integration's options to disable all cloud requests. Keys stay in
+HA's private configuration entry, not the inference server or source tree.
+Fallback sends transcript text, up to four recent conversation messages, and
+a ranked subset of HA-exposed names/areas and tool schemas to Groq; it does not
+send audio. The context includes at most 24 entities and 4000 characters, and
+the planner selects at most ten relevant tools to keep inference requests small.
+
+Select **Jarvis** as the conversation agent in Settings > Voice assistants,
+alongside R2T2 speech recognition and Kokoro speech synthesis. HA's Assist API
+supplies tools and applies entity-exposure settings. Tool names, confidence,
+argument schemas, duplicate calls and batch size are checked before execution.
+Execution is sequential and stops on errors; executed actions are never
+automatically retried or sent back through fallback. Responses prefer HA's
+intent speech. Unresolved requests return a clarification or failure message.
+
+This integration currently supports English. Its limits are 3000 input
+characters and eight proposed calls per turn. Local
+inference has an 18-second deadline, each Groq call has an 18-second timeout,
+and the complete planning sequence is limited to 65 seconds. Tool execution
+has a 30-second timeout per call. A timeout may occur after a device acted;
+the response asks the user to check rather than silently retrying. Simple time
+and date queries use HA's local clock. Read-only questions are restricted to
+query tools. Conditional writes ("if ... then ...") are not supported; the
+agent can read the condition's state but requires an explicit action request.
+
+Only the last four user/assistant messages are provided as planning context;
+this is not an unrestricted autonomous agent. HA records conversation/tool
+history. Integration logs include planner stage and call count, not keys or
+transcript contents. Changes to endpoint, key, model or confidence can be made
+through the integration's Configure dialog.
 
 Item labels and aliases ground tool selection. An empty `include_items` allows supported writable devices; use an explicit list to start with a small set. Exclusions always win. Example settings:
 

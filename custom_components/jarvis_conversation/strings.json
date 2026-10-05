@@ -1,0 +1,17 @@
+{
+  "title": "Jarvis Conversation",
+  "config": {
+    "step": {"user": {
+      "title": "Connect Jarvis",
+      "description": "Uses local Needle first. Optional Groq fallback sends transcript text, recent conversation and exposed home context to Groq when local planning fails. Leave the Groq key empty to stay local.",
+      "data": {"backend_url": "Inference WebSocket URL", "backend_token": "Inference bearer token", "groq_api_key": "Groq API key (optional)", "groq_model": "Groq model", "min_confidence": "Minimum tool confidence"}
+    }},
+    "error": {"cannot_connect": "Could not authenticate to a protocol-2 inference worker. Check the URL and token."},
+    "abort": {"already_configured": "This inference worker is already configured."}
+  },
+  "options": {
+    "step": {"init": {"title": "Jarvis settings", "description": "Clear the Groq key to disable cloud fallback.",
+      "data": {"backend_url": "Inference WebSocket URL", "backend_token": "Inference bearer token", "groq_api_key": "Groq API key (optional)", "groq_model": "Groq model", "min_confidence": "Minimum tool confidence"}}},
+    "error": {"cannot_connect": "Could not authenticate to the inference worker. Check the URL and token."}
+  }
+}
